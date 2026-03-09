@@ -22,10 +22,11 @@ web:
   port: 5000
 
 # Optional: Create a free account at https://opensky-network.org
-# to enable route lookups (origin/destination airports)
+# then go to Account > API Clients to create an API client.
+# This enables route lookups (origin/destination airports).
 opensky:
-  username: null
-  password: null
+  client_id: null             # e.g. "you@email.com-api-client"
+  client_secret: null         # your API client secret
 
 enrichment:
   cache_dir: data

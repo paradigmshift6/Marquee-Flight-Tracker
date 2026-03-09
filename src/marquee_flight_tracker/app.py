@@ -26,6 +26,8 @@ class FlightTrackerApp:
         self._fetcher = OpenSkyFetcher(
             self._bbox,
             min_interval=config.polling.interval_seconds,
+            client_id=config.opensky.client_id,
+            client_secret=config.opensky.client_secret,
             username=config.opensky.username,
             password=config.opensky.password,
         )

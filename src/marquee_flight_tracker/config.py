@@ -35,6 +35,10 @@ class WebConfig:
 
 @dataclass
 class OpenSkyConfig:
+    # OAuth2 client credentials (new method)
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    # Legacy basic auth (deprecated March 2026)
     username: Optional[str] = None
     password: Optional[str] = None
 
@@ -96,6 +100,8 @@ def load_config(path: str) -> AppConfig:
 
     if osky := raw.get("opensky"):
         config.opensky = OpenSkyConfig(
+            client_id=osky.get("client_id"),
+            client_secret=osky.get("client_secret"),
             username=osky.get("username"),
             password=osky.get("password"),
         )
