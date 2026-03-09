@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "web-marquee",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["/Users/levijohnson/Documents/Marquee Flight Tracker/run_web.sh"],
+      "runtimeExecutable": "/Users/levijohnson/Documents/Marquee Flight Tracker/.venv/bin/python",
+      "runtimeArgs": ["-m", "marquee_flight_tracker", "-c", "/Users/levijohnson/Documents/Marquee Flight Tracker/config.yaml", "--display", "web"],
       "port": 5000,
       "autoPort": true
     }

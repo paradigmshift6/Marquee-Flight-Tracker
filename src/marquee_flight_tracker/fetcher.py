@@ -133,6 +133,38 @@ class OpenSkyFetcher:
 
         return None
 
+    def fetch_flights_by_aircraft(self, icao24: str) -> Optional[list]:
+        """Fetch recent flights for an aircraft by ICAO24 hex address.
+
+        Uses /flights/aircraft endpoint which returns estDepartureAirport
+        and estArrivalAirport — more reliable than /routes.
+        """
+        if not self.authenticated:
+            return None
+
+        now = int(time.time())
+        begin = now - 86400  # Last 24 hours
+
+        try:
+            headers = self._auth_headers()
+            resp = self._client.get(
+                f"{OPENSKY_BASE}/flights/aircraft",
+                params={
+                    "icao24": icao24.lower(),
+                    "begin": begin,
+                    "end": now,
+                },
+                headers=headers,
+            )
+            if resp.status_code == 200:
+                flights = resp.json()
+                if flights:
+                    return flights
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            logger.debug("Flight lookup failed for %s: %s", icao24, e)
+
+        return None
+
     # --- OAuth2 token management ---
 
     def _auth_headers(self) -> dict:

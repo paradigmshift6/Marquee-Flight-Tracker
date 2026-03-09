@@ -1,9 +1,11 @@
 """Resolve flight routes (origin/destination) from callsigns.
 
 Uses a tiered approach:
-1. OpenSky /routes endpoint (needs authentication)
-2. Local disk cache from previous resolutions
-3. Graceful degradation (no route)
+1. Memory cache (instant)
+2. Disk cache from previous resolutions
+3. OpenSky /flights/aircraft endpoint (most reliable, needs auth)
+4. OpenSky /routes endpoint (needs auth, spotty coverage)
+5. Graceful degradation (no route)
 """
 from __future__ import annotations
 
@@ -58,8 +60,14 @@ class RouteResolver:
             if time.time() - self._failed_lookups[callsign] < self._fail_cooldown:
                 return None
 
-        # Tier 1: OpenSky /routes endpoint
         if self._fetcher and self._fetcher.authenticated:
+            # Tier 1: OpenSky /flights/aircraft (most reliable)
+            route = self._try_opensky_flights(callsign, icao24)
+            if route:
+                self._cache_route(callsign, route)
+                return route
+
+            # Tier 2: OpenSky /routes endpoint (spotty coverage)
             route = self._try_opensky_routes(callsign)
             if route:
                 self._cache_route(callsign, route)
@@ -68,6 +76,53 @@ class RouteResolver:
         # Mark as failed
         self._failed_lookups[callsign] = time.time()
         return None
+
+    def _try_opensky_flights(self, callsign: str, icao24: str) -> Optional[RouteInfo]:
+        """Try the /flights/aircraft endpoint — returns departure/arrival airports."""
+        flights = self._fetcher.fetch_flights_by_aircraft(icao24)
+        if not flights:
+            return None
+
+        # Find the most recent flight matching this callsign
+        best = None
+        for f in flights:
+            fc = (f.get("callsign") or "").strip()
+            if fc == callsign:
+                if best is None or f.get("lastSeen", 0) > best.get("lastSeen", 0):
+                    best = f
+
+        # If no exact callsign match, use the most recent flight for this aircraft
+        if best is None and flights:
+            flights_sorted = sorted(flights, key=lambda x: x.get("lastSeen", 0), reverse=True)
+            best = flights_sorted[0]
+
+        if best is None:
+            return None
+
+        dep_icao = best.get("estDepartureAirport")
+        arr_icao = best.get("estArrivalAirport")
+
+        if not dep_icao and not arr_icao:
+            return None
+
+        dep_airport = self._airport_db.lookup(dep_icao) if dep_icao else None
+        arr_airport = self._airport_db.lookup(arr_icao) if arr_icao else None
+
+        logger.info(
+            "Resolved route via /flights/aircraft: %s → %s (%s)",
+            dep_icao or "???",
+            arr_icao or "???",
+            callsign,
+        )
+
+        return RouteInfo(
+            departure_icao=dep_icao,
+            departure_iata=dep_airport.iata if dep_airport else None,
+            departure_city=dep_airport.city if dep_airport else None,
+            arrival_icao=arr_icao,
+            arrival_iata=arr_airport.iata if arr_airport else None,
+            arrival_city=arr_airport.city if arr_airport else None,
+        )
 
     def _try_opensky_routes(self, callsign: str) -> Optional[RouteInfo]:
         data = self._fetcher.fetch_routes(callsign)

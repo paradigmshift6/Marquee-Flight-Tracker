@@ -14,11 +14,20 @@ def format_flight(flight: EnrichedFlight, use_unicode: bool = True) -> str:
     parts.append(flight.flight_number or flight.callsign or flight.icao24)
 
     # Route
-    if flight.route and (flight.route.departure_iata or flight.route.arrival_iata):
-        dep = flight.route.departure_iata or flight.route.departure_icao or "???"
-        arr = flight.route.arrival_iata or flight.route.arrival_icao or "???"
-        arrow = " \u2192 " if use_unicode else " -> "
-        parts.append(f"{dep}{arrow}{arr}")
+    if flight.route:
+        dep = flight.route.departure_iata or flight.route.departure_icao
+        arr = flight.route.arrival_iata or flight.route.arrival_icao
+        arrow = "\u2192" if use_unicode else "->"
+
+        if dep and arr:
+            # Full route known: "SFO → SLC"
+            parts.append(f"{dep} {arrow} {arr}")
+        elif dep and not arr:
+            # Departure only (in-progress flight): "from SLC"
+            parts.append(f"from {dep}")
+        elif arr and not dep:
+            # Arrival only: "→ SLC"
+            parts.append(f"{arrow} {arr}")
 
     # Aircraft type
     if flight.aircraft_info:
