@@ -10,6 +10,7 @@ polling:
   interval_seconds: 12      # Minimum 10s for anonymous OpenSky access
   min_altitude_feet: 500    # Ignore ground traffic
   max_altitude_feet: 45000  # Ignore very high altitude
+  approach_only: false       # Set true to only show descending aircraft (landing approaches)
 
 display:
   backend: terminal          # terminal | web

@@ -91,6 +91,7 @@ class FlightTrackerApp:
     def _filter_states(self, states: List[RawAircraftState]) -> List[RawAircraftState]:
         min_alt = self._config.polling.min_altitude_feet
         max_alt = self._config.polling.max_altitude_feet
+        approach_only = self._config.polling.approach_only
         result = []
         for s in states:
             if s.on_ground:
@@ -100,6 +101,13 @@ class FlightTrackerApp:
             alt_feet = s.baro_altitude * 3.28084
             if alt_feet < min_alt or alt_feet > max_alt:
                 continue
+
+            # Approach-only mode: only show descending aircraft
+            if approach_only:
+                # vertical_rate is in m/s from OpenSky; negative = descending
+                if s.vertical_rate is None or s.vertical_rate >= 0:
+                    continue
+
             result.append(s)
         return result
 

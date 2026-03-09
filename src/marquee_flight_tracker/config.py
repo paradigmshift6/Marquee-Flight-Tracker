@@ -17,6 +17,7 @@ class PollingConfig:
     interval_seconds: float = 12.0
     min_altitude_feet: float = 500.0
     max_altitude_feet: float = 45000.0
+    approach_only: bool = False  # Only show descending aircraft (on approach)
 
 
 @dataclass
@@ -82,6 +83,7 @@ def load_config(path: str) -> AppConfig:
             interval_seconds=max(poll.get("interval_seconds", 12.0), 10.0),
             min_altitude_feet=poll.get("min_altitude_feet", 500.0),
             max_altitude_feet=poll.get("max_altitude_feet", 45000.0),
+            approach_only=poll.get("approach_only", False),
         )
 
     if disp := raw.get("display"):
