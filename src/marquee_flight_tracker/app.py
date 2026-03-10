@@ -157,6 +157,7 @@ class FlightTrackerApp:
                 observer_lat=self._config.location.latitude,
                 observer_lon=self._config.location.longitude,
                 fetcher=self._fetcher,
+                local_airport=self._config.location.local_airport,
             )
             logger.info("Enrichment pipeline initialized")
         except Exception as e:

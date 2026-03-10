@@ -10,6 +10,7 @@ class LocationConfig:
     latitude: float = 0.0
     longitude: float = 0.0
     radius_miles: float = 5.0
+    local_airport: Optional[str] = None  # ICAO code e.g. "KSLC" — used to infer arrivals
 
 
 @dataclass
@@ -76,6 +77,7 @@ def load_config(path: str) -> AppConfig:
             latitude=loc.get("latitude", 0.0),
             longitude=loc.get("longitude", 0.0),
             radius_miles=loc.get("radius_miles", 5.0),
+            local_airport=loc.get("local_airport"),
         )
 
     if poll := raw.get("polling"):

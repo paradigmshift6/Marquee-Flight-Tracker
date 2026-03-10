@@ -23,9 +23,11 @@ class FlightEnricher:
         observer_lat: float,
         observer_lon: float,
         fetcher: Optional["OpenSkyFetcher"] = None,
+        local_airport: Optional[str] = None,
     ):
         self._observer_lat = observer_lat
         self._observer_lon = observer_lon
+        self._local_airport = local_airport  # ICAO code e.g. "KSLC"
 
         self._aircraft_db = AircraftDB(cache_dir)
         self._airline_db = AirlineDB(cache_dir)
@@ -57,6 +59,29 @@ class FlightEnricher:
         route = None
         if state.callsign:
             route = self._route_resolver.resolve(state.callsign, state.icao24)
+
+        # 3b. Infer arrival/departure using local airport proximity
+        if route and self._local_airport:
+            local = self._local_airport
+            local_info = self._airport_db.lookup(local)
+            local_iata = local_info.iata if local_info else None
+
+            dep_icao = route.departure_icao
+            arr_icao = route.arrival_icao
+
+            if dep_icao and not arr_icao and dep_icao != local:
+                # Departure is NOT local airport, aircraft is near us → arriving here
+                route.arrival_icao = local
+                route.arrival_iata = local_iata
+                route.arrival_city = local_info.city if local_info else None
+            elif dep_icao and not arr_icao and dep_icao == local:
+                # Departing from local airport, destination unknown — leave as-is
+                pass
+            elif not dep_icao and arr_icao and arr_icao != local:
+                # Arrival is NOT local airport but aircraft is near us → departing from here
+                route.departure_icao = local
+                route.departure_iata = local_iata
+                route.departure_city = local_info.city if local_info else None
 
         # 4. Unit conversions
         alt_feet = int(state.baro_altitude * 3.28084) if state.baro_altitude else None

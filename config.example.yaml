@@ -5,6 +5,7 @@ location:
   latitude: 37.7749        # Your latitude (get from Google Maps)
   longitude: -122.4194     # Your longitude
   radius_miles: 5           # Bounding box radius around your location
+  local_airport: null        # ICAO code of your nearest airport (e.g. "KSFO") — infers arrival/departure
 
 polling:
   interval_seconds: 12      # Minimum 10s for anonymous OpenSky access
