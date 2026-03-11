@@ -133,6 +133,9 @@ class CalendarProvider(MarqueeProvider):
             dt = datetime.fromisoformat(start["dateTime"])
             time_str = dt.strftime("%-I:%M %p")
             delta = dt.replace(tzinfo=timezone.utc if dt.tzinfo is None else dt.tzinfo) - now
+            # Skip events that have already started (> 1 min ago)
+            if delta.total_seconds() < -60:
+                return None
             minutes_until = max(0, int(delta.total_seconds() / 60))
             relative = self._relative_time(delta)
         elif "date" in start:
