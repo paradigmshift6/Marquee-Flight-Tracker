@@ -1,14 +1,14 @@
-"""Entry point: python -m marquee_flight_tracker"""
+"""Entry point: python -m marquee_board"""
 import argparse
 import logging
 
 from .config import load_config
-from .app import FlightTrackerApp
+from .app import MarqueeBoardApp
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Marquee Flight Tracker - Track overhead aircraft"
+        description="Marquee Board - A smart adaptive LED matrix display"
     )
     parser.add_argument(
         "-c", "--config",
@@ -22,8 +22,8 @@ def main():
     )
     parser.add_argument(
         "--display",
-        choices=["terminal", "web"],
-        help="Override display backend from config",
+        choices=["terminal", "web", "led"],
+        help="Override display backend from config (led requires Raspberry Pi)",
     )
     args = parser.parse_args()
 
@@ -36,7 +36,7 @@ def main():
     if args.display:
         config.display.backend = args.display
 
-    app = FlightTrackerApp(config)
+    app = MarqueeBoardApp(config)
     app.run()
 
 

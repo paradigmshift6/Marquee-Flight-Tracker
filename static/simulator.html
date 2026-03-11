@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marquee Board — LED Simulator</title>
+    <link rel="stylesheet" href="/static/simulator.css">
+</head>
+<body>
+    <div class="simulator-container">
+        <div class="header">
+            <span class="dot"></span>
+            <span class="title">LED MATRIX SIMULATOR</span>
+            <span class="status" id="status">connecting...</span>
+        </div>
+        <div class="matrix-frame">
+            <canvas id="led-canvas"></canvas>
+        </div>
+        <div class="controls">
+            <div class="info" id="info">64×64 • 1 fps</div>
+            <div class="buttons">
+                <button id="btn-zoom-in" title="Zoom in">+</button>
+                <button id="btn-zoom-out" title="Zoom out">−</button>
+                <button id="btn-mock" title="Inject mock data">Mock</button>
+            </div>
+        </div>
+    </div>
+    <!-- Hidden canvas to decode the source PNG -->
+    <canvas id="source-canvas" style="display:none"></canvas>
+    <script src="/static/simulator.js"></script>
+</body>
+</html>

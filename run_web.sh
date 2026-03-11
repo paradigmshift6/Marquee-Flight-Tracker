@@ -1,4 +1,5 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-source .venv/bin/activate
-exec python -m marquee_flight_tracker -c config.yaml --display web
+export PYTHONPATH="$PWD/src:$PWD/.venv/lib/python3.9/site-packages"
+export PORT="${PORT:-5050}"
+exec /usr/bin/python3 -m marquee_board -c config.yaml --display web

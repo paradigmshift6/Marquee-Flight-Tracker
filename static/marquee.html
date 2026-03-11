@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Tracker</title>
+    <title>Marquee Board</title>
     <link rel="stylesheet" href="/static/marquee.css">
 </head>
 <body>
-    <div class="tracker">
+    <div class="board">
         <div class="header">
             <span class="dot"></span>
-            <span class="title">FLIGHT TRACKER</span>
-            <span class="count" id="count"></span>
+            <span class="title">MARQUEE BOARD</span>
+            <span class="status" id="status"></span>
         </div>
         <div class="marquee-container">
-            <div class="marquee-content" id="marquee">Scanning the skies...</div>
+            <div class="marquee-content" id="marquee">Loading...</div>
         </div>
-        <div class="flight-list" id="flight-list"></div>
+        <div class="sections" id="sections"></div>
     </div>
     <script src="/static/marquee.js"></script>
 </body>

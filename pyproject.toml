@@ -1,17 +1,20 @@
 [project]
-name = "marquee-flight-tracker"
-version = "0.1.0"
-description = "Track overhead aircraft and display on a scrolling marquee"
+name = "marquee-board"
+version = "0.3.0"
+description = "A smart adaptive LED matrix display board"
 requires-python = ">=3.9"
 dependencies = [
     "httpx>=0.25",
     "pyyaml>=6.0",
     "rich>=13.0",
+    "Pillow>=10.0",
 ]
 
 [project.optional-dependencies]
 web = ["flask>=3.0"]
+calendar = ["google-auth-oauthlib>=1.0", "google-api-python-client>=2.0"]
+led = ["rpi-rgb-led-matrix>=0.0.1"]
 dev = ["pytest>=7.0"]
 
 [project.scripts]
-flight-tracker = "marquee_flight_tracker.__main__:main"
+marquee-board = "marquee_board.__main__:main"

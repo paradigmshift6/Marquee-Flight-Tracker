@@ -1,6 +1,6 @@
 import threading
 import time
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from rich.live import Live
 from rich.text import Text
@@ -13,7 +13,7 @@ class TerminalDisplay(DisplayBackend):
     def __init__(
         self,
         scroll_speed: float = 0.08,
-        idle_message: str = "Scanning the skies...",
+        idle_message: str = "No data yet...",
         width: int = 60,
     ):
         self._scroll_speed = scroll_speed
@@ -29,9 +29,18 @@ class TerminalDisplay(DisplayBackend):
         self._thread = threading.Thread(target=self._scroll_loop, daemon=True)
         self._thread.start()
 
-    def update(self, messages: List[str]) -> None:
+    def update(
+        self,
+        grouped: Dict[str, List[str]],
+        display_names: Dict[str, str],
+        **kwargs,
+    ) -> None:
+        # Flatten all provider messages into one interleaved list
+        flat = []
+        for name, msgs in grouped.items():
+            flat.extend(msgs)
         with self._lock:
-            self._messages = messages.copy()
+            self._messages = flat
 
     def stop(self) -> None:
         self._running = False
@@ -50,7 +59,7 @@ class TerminalDisplay(DisplayBackend):
                 if not msgs:
                     live.update(Panel(
                         Text(self._idle_message, style="dim italic"),
-                        title="[bold cyan]Flight Tracker[/]",
+                        title="[bold cyan]Marquee Board[/]",
                         width=self._width + 4,
                         border_style="cyan",
                     ))
@@ -63,8 +72,8 @@ class TerminalDisplay(DisplayBackend):
 
                 live.update(Panel(
                     Text(window, style="bold green"),
-                    title="[bold cyan]Flight Tracker[/]",
-                    subtitle=f"[dim]{len(msgs)} aircraft nearby[/]",
+                    title="[bold cyan]Marquee Board[/]",
+                    subtitle=f"[dim]{len(msgs)} items[/]",
                     width=self._width + 4,
                     border_style="cyan",
                 ))

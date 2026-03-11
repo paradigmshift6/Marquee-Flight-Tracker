@@ -10,14 +10,15 @@ body {
     font-family: 'Courier New', 'Lucida Console', monospace;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
 }
 
-.tracker {
+.board {
     width: 100%;
     max-width: 900px;
+    margin-top: 40px;
 }
 
 .header {
@@ -50,9 +51,9 @@ body {
     color: #00cc33;
 }
 
-.count {
+.status {
     margin-left: auto;
-    font-size: 13px;
+    font-size: 12px;
     color: #338833;
 }
 
@@ -102,7 +103,8 @@ body {
     100% { transform: translateX(-100%); }
 }
 
-.flight-list {
+/* Sections container */
+.sections {
     background: #0d0d0d;
     border: 1px solid #1a3a1a;
     border-radius: 0 0 8px 8px;
@@ -110,15 +112,26 @@ body {
     min-height: 60px;
 }
 
-.flight-list-title {
+/* Individual provider section */
+.section {
+    margin-bottom: 16px;
+}
+
+.section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
     font-size: 11px;
     letter-spacing: 2px;
     color: #338833;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #1a3a1a;
 }
 
-.flight-item {
-    padding: 8px 0;
+.section-item {
+    padding: 6px 0;
     font-size: 15px;
     color: #00dd38;
     border-bottom: 1px solid #0f1f0f;
@@ -127,19 +140,14 @@ body {
     gap: 8px;
 }
 
-.flight-item:last-child {
+.section-item:last-child {
     border-bottom: none;
 }
 
-.flight-item .index {
+.section-item .index {
     color: #1a5a1a;
     font-size: 12px;
     min-width: 24px;
-}
-
-.flight-item.active {
-    color: #00ff41;
-    text-shadow: 0 0 6px #00ff4160;
 }
 
 .idle {
