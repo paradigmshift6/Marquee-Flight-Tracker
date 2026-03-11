@@ -77,11 +77,20 @@ class FlightProvider(MarqueeProvider):
                     priority=Priority.URGENT,
                     data={
                         "flight_number": f.flight_number or f.callsign or "???",
-                        "route_dep": getattr(f, "origin_airport", None) or "",
-                        "route_arr": getattr(f, "destination_airport", None) or "",
+                        "route_dep": (
+                            (f.route.departure_iata or f.route.departure_icao or "")
+                            if f.route else ""
+                        ),
+                        "route_arr": (
+                            (f.route.arrival_iata or f.route.arrival_icao or "")
+                            if f.route else ""
+                        ),
                         "altitude_feet": f.altitude_feet,
                         "distance_miles": f.distance_miles,
-                        "aircraft_type": getattr(f, "aircraft_type", None) or "",
+                        "aircraft_type": (
+                            (f.aircraft_info.typecode or f.aircraft_info.model or "")
+                            if f.aircraft_info else ""
+                        ),
                     },
                 )
                 for f in flights
