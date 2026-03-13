@@ -1,6 +1,7 @@
+import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import yaml
 
@@ -195,7 +196,27 @@ def load_config(path: str) -> AppConfig:
             active_end=str(sched.get("active_end", "18:00")),
         )
 
-    if config.location.latitude == 0.0 and config.location.longitude == 0.0:
-        raise ValueError("You must set your latitude and longitude in the config file.")
-
     return config
+
+
+def config_to_dict(config: AppConfig) -> dict:
+    """Convert an AppConfig to a plain dict suitable for JSON/YAML."""
+    return dataclasses.asdict(config)
+
+
+def save_config(path: str, config: Union[AppConfig, dict]) -> None:
+    """Write config to a YAML file.  Accepts AppConfig or a plain dict."""
+    if isinstance(config, AppConfig):
+        data = config_to_dict(config)
+    else:
+        data = config
+
+    # Ensure schedule times stay as quoted strings (PyYAML would
+    # otherwise interpret "06:30" as an integer).
+    if "schedule" in data:
+        for key in ("active_start", "active_end"):
+            if key in data["schedule"] and data["schedule"][key] is not None:
+                data["schedule"][key] = str(data["schedule"][key])
+
+    with open(path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)

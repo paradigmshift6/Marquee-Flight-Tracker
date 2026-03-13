@@ -1,0 +1,207 @@
+/* Settings page — green-on-black terminal aesthetic */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #0a0a0a;
+    color: #00ff41;
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.settings-container {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 10px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border: 1px solid #1a3a1a;
+    border-bottom: none;
+    background: #0d0d0d;
+    border-radius: 8px 8px 0 0;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    background: #00ff41;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+.title {
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: #00cc33;
+}
+.nav-links {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+}
+.nav-links a {
+    font-size: 12px;
+    color: #338833;
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+.nav-links a:hover { color: #00ff41; }
+
+/* Status bar */
+.status-bar {
+    padding: 10px 20px;
+    font-size: 13px;
+    border: 1px solid #1a3a1a;
+    border-bottom: none;
+    background: #0d0d0d;
+    transition: opacity 0.3s;
+}
+.status-bar.success { color: #00ff41; border-color: #1a3a1a; }
+.status-bar.error { color: #ff4444; border-color: #3a1a1a; }
+.status-bar.hidden { display: none; }
+
+/* Form sections */
+.config-section {
+    border: 1px solid #1a3a1a;
+    border-bottom: none;
+    background: #0d0d0d;
+    padding: 16px 20px;
+}
+.config-section legend {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #338833;
+    padding: 0 8px;
+}
+
+/* Fields */
+.field {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+    font-size: 12px;
+    color: #00cc33;
+    letter-spacing: 1px;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field input[type="password"],
+.field input[type="time"],
+.field select {
+    background: #111;
+    border: 1px solid #1a3a1a;
+    color: #00ff41;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+}
+.field input:focus,
+.field select:focus {
+    border-color: #00ff41;
+    box-shadow: 0 0 4px rgba(0, 255, 65, 0.25);
+}
+.field input::placeholder {
+    color: #336633;
+}
+.field select option {
+    background: #111;
+    color: #00ff41;
+}
+
+.field input[type="range"] {
+    width: 100%;
+    accent-color: #00ff41;
+    margin-top: 4px;
+}
+
+/* Toggle (checkbox) rows */
+.field-toggle {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+.field-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #00ff41;
+    cursor: pointer;
+}
+.field-toggle label {
+    cursor: pointer;
+}
+
+.hint {
+    font-size: 10px;
+    color: #336633;
+}
+
+.range-value {
+    font-size: 12px;
+    color: #338833;
+    margin-left: 8px;
+}
+.range-row {
+    display: flex;
+    align-items: center;
+}
+
+/* Actions bar */
+.actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    border: 1px solid #1a3a1a;
+    background: #0d0d0d;
+    border-radius: 0 0 8px 8px;
+}
+
+.btn {
+    background: #1a3a1a;
+    border: 1px solid #338833;
+    color: #00ff41;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 2px;
+    padding: 10px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn:hover { background: #2a4a2a; }
+.btn:active { background: #3a5a3a; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-restart {
+    border-color: #886633;
+    color: #ffaa33;
+    background: #2a2a1a;
+}
+.btn-restart:hover { background: #3a3a2a; }
+
+/* Responsive */
+@media (max-width: 500px) {
+    body { padding: 10px; }
+    .settings-container { margin-top: 0; }
+    .actions { flex-direction: column; }
+    .btn { width: 100%; text-align: center; }
+}

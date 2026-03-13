@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from flask import Flask, jsonify, send_from_directory, Response
+from flask import Flask, jsonify, request, send_from_directory, Response
 
 from .base import DisplayBackend
 
@@ -16,6 +16,14 @@ STATIC_DIR = Path(
     or str(Path(__file__).resolve().parent.parent.parent.parent / "static")
 )
 
+# Fields that should be masked when serving config via the API
+SENSITIVE_FIELDS = {
+    ("opensky", "client_secret"),
+    ("opensky", "password"),
+    ("weather", "api_key"),
+}
+MASK_VALUE = "********"
+
 
 class WebDisplay(DisplayBackend):
     def __init__(
@@ -25,6 +33,8 @@ class WebDisplay(DisplayBackend):
         idle_message: str = "No data yet...",
         renderer_width: int = 64,
         renderer_height: int = 64,
+        config=None,
+        config_path: str = "config.yaml",
     ):
         self._host = host
         self._port = int(os.environ.get("PORT", port))
@@ -34,6 +44,11 @@ class WebDisplay(DisplayBackend):
         self._mock_hold = False  # When True, update() won't overwrite mock data
         self._lock = threading.Lock()
         self._thread: Optional[threading.Thread] = None
+
+        # Settings support
+        self._config = config
+        self._config_path = config_path
+        self._settings_lock = threading.Lock()
 
         # Renderer
         self._renderer_width = renderer_width
@@ -120,7 +135,6 @@ class WebDisplay(DisplayBackend):
         @self._app.route("/api/mock", methods=["POST"])
         def inject_mock():
             """Inject mock data for testing all layout modes."""
-            from flask import request
             from ..providers.base import MarqueeMessage, Priority
 
             mode = (request.args.get("mode") or "flight").lower()
@@ -192,6 +206,78 @@ class WebDisplay(DisplayBackend):
 
             return jsonify({"ok": True, "mode": mode, "count": len(msgs)})
 
+        # --- Settings UI ---
+
+        @self._app.route("/settings")
+        def settings_page():
+            return send_from_directory(str(STATIC_DIR), "settings.html")
+
+        @self._app.route("/api/settings")
+        def get_settings():
+            from ..config import config_to_dict
+            if not self._config:
+                return jsonify({"error": "Config not available"}), 503
+            with self._settings_lock:
+                data = config_to_dict(self._config)
+            # Mask sensitive fields
+            for section_key, field_key in SENSITIVE_FIELDS:
+                if section_key in data and field_key in data[section_key]:
+                    val = data[section_key][field_key]
+                    data[section_key][field_key] = MASK_VALUE if val else ""
+            return jsonify(data)
+
+        @self._app.route("/api/settings", methods=["POST"])
+        def save_settings():
+            from ..config import config_to_dict, save_config
+
+            payload = request.get_json()
+            if not payload:
+                return jsonify({"error": "No JSON body"}), 400
+
+            with self._settings_lock:
+                # Start from current config as base
+                current_dict = config_to_dict(self._config)
+
+                # Merge submitted values over current config
+                for section_key, section_val in payload.items():
+                    if section_key.startswith("_"):
+                        continue  # skip meta keys like _restart
+                    if section_key not in current_dict:
+                        continue
+                    if not isinstance(section_val, dict):
+                        continue
+                    for field_key, field_val in section_val.items():
+                        if field_key not in current_dict[section_key]:
+                            continue
+                        # Preserve existing sensitive values if masked
+                        if (section_key, field_key) in SENSITIVE_FIELDS:
+                            if field_val == MASK_VALUE or field_val == "":
+                                continue
+                        current_dict[section_key][field_key] = field_val
+
+                # Save to disk
+                try:
+                    save_config(self._config_path, current_dict)
+                except Exception as e:
+                    return jsonify({"error": f"Failed to save: {e}"}), 500
+
+            do_restart = payload.get("_restart", False)
+
+            if do_restart:
+                def _delayed_exit():
+                    import time as _time
+                    import sys
+                    _time.sleep(1)
+                    logger.info("Restarting after settings change...")
+                    sys.exit(0)
+                threading.Thread(target=_delayed_exit, daemon=True).start()
+
+            return jsonify({
+                "saved": True,
+                "restart_required": True,
+                "restarting": do_restart,
+            })
+
         @self._app.route("/static/<path:filename>")
         def static_files(filename):
             return send_from_directory(str(STATIC_DIR), filename)
@@ -209,6 +295,7 @@ class WebDisplay(DisplayBackend):
         self._thread.start()
         logger.info("Web marquee running at http://%s:%d", self._host, self._port)
         logger.info("LED simulator at http://%s:%d/simulator", self._host, self._port)
+        logger.info("Settings page at http://%s:%d/settings", self._host, self._port)
 
     def update(
         self,

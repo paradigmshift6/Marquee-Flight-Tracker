@@ -1,9 +1,12 @@
 """Entry point: python -m marquee_board"""
 import argparse
 import logging
+from pathlib import Path
 
-from .config import load_config
+from .config import load_config, save_config, AppConfig
 from .app import MarqueeBoardApp
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -32,11 +35,30 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    config = load_config(args.config)
+    config_path = args.config
+
+    # First-run: create a default config if the file doesn't exist
+    if not Path(config_path).exists():
+        default = AppConfig()
+        default.display.backend = "web"
+        save_config(config_path, default)
+        logger.info(
+            "Created default config at %s — visit /settings to configure",
+            config_path,
+        )
+
+    config = load_config(config_path)
     if args.display:
         config.display.backend = args.display
 
-    app = MarqueeBoardApp(config)
+    # If location isn't set, force web backend so user can configure via browser
+    if config.location.latitude == 0.0 and config.location.longitude == 0.0:
+        logger.warning(
+            "Location not configured — visit /settings to complete setup"
+        )
+        config.display.backend = "web"
+
+    app = MarqueeBoardApp(config, config_path=config_path)
     app.run()
 
 

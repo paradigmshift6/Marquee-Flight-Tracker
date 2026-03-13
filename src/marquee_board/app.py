@@ -12,8 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class MarqueeBoardApp:
-    def __init__(self, config: AppConfig):
+    def __init__(self, config: AppConfig, config_path: str = "config.yaml"):
         self._config = config
+        self._config_path = config_path
         self._providers: List[MarqueeProvider] = []
         self._display = self._build_display(config)
         self._running = False
@@ -127,6 +128,8 @@ class MarqueeBoardApp:
                 idle_message=config.display.idle_message,
                 renderer_width=config.renderer.width,
                 renderer_height=config.renderer.height,
+                config=config,
+                config_path=self._config_path,
             )
         elif backend == "led":
             from .display.led import LEDDisplay

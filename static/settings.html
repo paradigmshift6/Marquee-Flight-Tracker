@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marquee Board — Settings</title>
+    <link rel="stylesheet" href="/static/settings.css">
+</head>
+<body>
+    <div class="settings-container">
+        <div class="header">
+            <span class="dot"></span>
+            <span class="title">SETTINGS</span>
+            <div class="nav-links">
+                <a href="/">BOARD</a>
+                <a href="/simulator">SIMULATOR</a>
+            </div>
+        </div>
+
+        <div id="status-bar" class="status-bar hidden"></div>
+
+        <form id="settings-form">
+
+            <!-- LOCATION -->
+            <fieldset class="config-section">
+                <legend>LOCATION</legend>
+                <div class="field">
+                    <label for="location-latitude">Latitude</label>
+                    <input type="number" id="location-latitude" step="0.0001"
+                           data-section="location" data-key="latitude"
+                           placeholder="e.g. 40.7128">
+                    <span class="hint">Get from Google Maps (right-click any location)</span>
+                </div>
+                <div class="field">
+                    <label for="location-longitude">Longitude</label>
+                    <input type="number" id="location-longitude" step="0.0001"
+                           data-section="location" data-key="longitude"
+                           placeholder="e.g. -111.9908">
+                </div>
+                <div class="field">
+                    <label for="location-radius_miles">Radius (miles)</label>
+                    <input type="number" id="location-radius_miles" step="0.5" min="0.5" max="50"
+                           data-section="location" data-key="radius_miles">
+                </div>
+                <div class="field">
+                    <label for="location-local_airport">Local Airport (ICAO)</label>
+                    <input type="text" id="location-local_airport" placeholder="e.g. KSLC"
+                           maxlength="4" style="text-transform: uppercase;"
+                           data-section="location" data-key="local_airport">
+                    <span class="hint">4-letter ICAO code — enables arrival/departure detection</span>
+                </div>
+            </fieldset>
+
+            <!-- SCHEDULE -->
+            <fieldset class="config-section">
+                <legend>SCHEDULE</legend>
+                <div class="field field-toggle">
+                    <input type="checkbox" id="schedule-enabled"
+                           data-section="schedule" data-key="enabled">
+                    <label for="schedule-enabled">Enable Active Hours</label>
+                </div>
+                <div class="field">
+                    <label for="schedule-active_start">Turn On</label>
+                    <input type="time" id="schedule-active_start"
+                           data-section="schedule" data-key="active_start">
+                </div>
+                <div class="field">
+                    <label for="schedule-active_end">Turn Off</label>
+                    <input type="time" id="schedule-active_end"
+                           data-section="schedule" data-key="active_end">
+                </div>
+            </fieldset>
+
+            <!-- FLIGHTS -->
+            <fieldset class="config-section">
+                <legend>FLIGHTS</legend>
+                <div class="field field-toggle">
+                    <input type="checkbox" id="flights-enabled"
+                           data-section="flights" data-key="enabled">
+                    <label for="flights-enabled">Enable Flight Tracking</label>
+                </div>
+                <div class="field">
+                    <label for="opensky-client_id">OpenSky Client ID</label>
+                    <input type="text" id="opensky-client_id"
+                           data-section="opensky" data-key="client_id"
+                           placeholder="optional — enables route lookups">
+                    <span class="hint">Create at opensky-network.org &rarr; Account &rarr; API Clients</span>
+                </div>
+                <div class="field">
+                    <label for="opensky-client_secret">OpenSky Client Secret</label>
+                    <input type="password" id="opensky-client_secret"
+                           data-section="opensky" data-key="client_secret"
+                           data-sensitive="true">
+                </div>
+            </fieldset>
+
+            <!-- WEATHER -->
+            <fieldset class="config-section">
+                <legend>WEATHER</legend>
+                <div class="field field-toggle">
+                    <input type="checkbox" id="weather-enabled"
+                           data-section="weather" data-key="enabled">
+                    <label for="weather-enabled">Enable Weather</label>
+                </div>
+                <div class="field">
+                    <label for="weather-api_key">OpenWeatherMap API Key</label>
+                    <input type="password" id="weather-api_key"
+                           data-section="weather" data-key="api_key"
+                           data-sensitive="true"
+                           placeholder="required if weather is enabled">
+                    <span class="hint">Free at openweathermap.org/appid</span>
+                </div>
+                <div class="field">
+                    <label for="weather-units">Units</label>
+                    <select id="weather-units"
+                            data-section="weather" data-key="units">
+                        <option value="imperial">Imperial (°F, mph)</option>
+                        <option value="metric">Metric (°C, km/h)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="weather-poll_interval">Poll Interval (seconds)</label>
+                    <input type="number" id="weather-poll_interval" min="60" max="3600" step="30"
+                           data-section="weather" data-key="poll_interval">
+                </div>
+            </fieldset>
+
+            <!-- CALENDAR -->
+            <fieldset class="config-section">
+                <legend>CALENDAR</legend>
+                <div class="field field-toggle">
+                    <input type="checkbox" id="calendar-enabled"
+                           data-section="calendar" data-key="enabled">
+                    <label for="calendar-enabled">Enable Google Calendar</label>
+                </div>
+                <div class="field">
+                    <label for="calendar-credentials_file">Credentials File</label>
+                    <input type="text" id="calendar-credentials_file"
+                           data-section="calendar" data-key="credentials_file"
+                           placeholder="credentials.json">
+                    <span class="hint">Path to Google OAuth2 credentials JSON</span>
+                </div>
+                <div class="field">
+                    <label for="calendar-calendar_id">Calendar ID</label>
+                    <input type="text" id="calendar-calendar_id"
+                           data-section="calendar" data-key="calendar_id"
+                           placeholder="primary">
+                </div>
+                <div class="field">
+                    <label for="calendar-lookahead_hours">Lookahead (hours)</label>
+                    <input type="number" id="calendar-lookahead_hours" min="1" max="168"
+                           data-section="calendar" data-key="lookahead_hours">
+                </div>
+                <div class="field">
+                    <label for="calendar-poll_interval">Poll Interval (seconds)</label>
+                    <input type="number" id="calendar-poll_interval" min="30" max="3600" step="30"
+                           data-section="calendar" data-key="poll_interval">
+                </div>
+            </fieldset>
+
+            <!-- DISPLAY -->
+            <fieldset class="config-section">
+                <legend>DISPLAY</legend>
+                <div class="field">
+                    <label for="display-idle_message">Idle Message</label>
+                    <input type="text" id="display-idle_message"
+                           data-section="display" data-key="idle_message"
+                           placeholder="Scanning the skies...">
+                </div>
+                <div class="field">
+                    <label for="renderer-brightness">LED Brightness</label>
+                    <div class="range-row">
+                        <input type="range" id="renderer-brightness" min="10" max="100" step="5"
+                               data-section="renderer" data-key="brightness">
+                        <span class="range-value" id="brightness-value"></span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ACTIONS -->
+            <div class="actions">
+                <button type="submit" class="btn" id="btn-save">SAVE</button>
+                <button type="button" class="btn btn-restart" id="btn-restart">SAVE &amp; RESTART</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/settings.js"></script>
+</body>
+</html>
