@@ -72,6 +72,19 @@ pip install -e ".[led,web,calendar]"
 
 ### 4. Configure
 
+**Option A — Web Settings UI (recommended for first-time setup):**
+
+Just start the server. If no `config.yaml` exists, one is created automatically and the web settings page opens:
+
+```bash
+source .venv/bin/activate
+PORT=5050 python -m marquee_board --display web
+```
+
+Then open `http://<your-pi-ip>:5050/settings` in a browser and fill in your location, API keys, and preferences. Click **Save & Restart** when done.
+
+**Option B — Edit config file directly:**
+
 ```bash
 cp config.example.yaml config.yaml
 nano config.yaml
@@ -215,9 +228,29 @@ sudo systemctl status marquee-board
 sudo journalctl -u marquee-board -f
 ```
 
+## Web Settings UI
+
+Configure everything through a browser — no need to edit YAML files.
+
+```bash
+source .venv/bin/activate
+PORT=5050 python -m marquee_board -c config.yaml --display web
+```
+
+Open `http://<your-pi-ip>:5050/settings` to manage:
+
+- **Location** — latitude, longitude, radius, local airport
+- **Schedule** — active hours (auto-sleep at night)
+- **Flights** — enable/disable, OpenSky API credentials
+- **Weather** — enable/disable, API key, units, poll interval
+- **Calendar** — enable/disable, credentials file, calendar ID
+- **Display** — idle message, LED brightness
+
+API keys and secrets are masked in the UI and preserved when saving unchanged. Click **Save** to write config, or **Save & Restart** to apply changes immediately (works with systemd auto-restart on Pi).
+
 ## Web Simulator
 
-You can preview the display in a browser without any LED hardware:
+Preview the display in a browser without any LED hardware:
 
 ```bash
 source .venv/bin/activate
@@ -250,6 +283,9 @@ Then open `http://<your-pi-ip>:5050/simulator` in a browser.
 | `renderer.height` | | `64` | Matrix height in pixels |
 | `renderer.brightness` | | `80` | LED brightness (0-100) |
 | `renderer.gpio_slowdown` | | `4` | GPIO timing (increase if flickering) |
+| `schedule.enabled` | | `false` | Enable active hours schedule |
+| `schedule.active_start` | | `06:30` | Time to turn on (HH:MM, 24h) |
+| `schedule.active_end` | | `18:00` | Time to turn off (HH:MM, 24h) |
 | `web.port` | | `5000` | Web server port |
 | `weather.enabled` | | `false` | Enable weather provider |
 | `weather.api_key` | | | OpenWeatherMap API key |
