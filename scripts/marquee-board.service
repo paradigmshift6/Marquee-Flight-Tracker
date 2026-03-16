@@ -1,0 +1,31 @@
+[Unit]
+Description=Marquee Board LED Display
+# Wait for network so git pull and API calls work
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+# LED matrix requires root for GPIO; -E preserves env vars (CA bundle, etc.)
+ExecStart=/usr/bin/sudo -E /home/levi/marquee-board/scripts/start-marquee.sh
+WorkingDirectory=/home/levi/marquee-board
+
+# Environment
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+Environment=HOME=/home/levi
+
+# Restart policy: restart on crash, but not on clean shutdown
+Restart=on-failure
+RestartSec=10
+
+# Give the app time to clean up GPIO on stop
+TimeoutStopSec=15
+
+# Logging → journalctl -u marquee-board
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=marquee-board
+
+[Install]
+WantedBy=multi-user.target
