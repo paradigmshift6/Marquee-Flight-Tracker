@@ -1,4 +1,17 @@
 """Entry point: python -m marquee_board"""
+# Fix certifi CA bundle BEFORE requests is imported by any dependency.
+# On Pi, venvs built under sudo can have a broken certifi with no cacert.pem.
+import os as _os
+if "REQUESTS_CA_BUNDLE" not in _os.environ:
+    _sys_ca = "/etc/ssl/certs/ca-certificates.crt"
+    try:
+        import certifi as _certifi
+        if not _os.path.isfile(_certifi.where()):
+            raise FileNotFoundError
+    except Exception:
+        if _os.path.isfile(_sys_ca):
+            _os.environ["REQUESTS_CA_BUNDLE"] = _sys_ca
+
 import argparse
 import logging
 from pathlib import Path
