@@ -36,7 +36,7 @@ def format_flight(flight: EnrichedFlight, use_unicode: bool = True) -> str:
             parts.append(type_str)
 
     # Altitude
-    if flight.altitude_feet and not flight.on_ground:
+    if flight.altitude_feet is not None and not flight.on_ground:
         parts.append(f"{flight.altitude_feet:,}ft")
 
     return "  ".join(parts)

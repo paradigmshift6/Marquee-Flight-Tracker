@@ -347,7 +347,7 @@ class LayoutEngine:
 
         # Weather icon + temperature (always drawn)
         condition = d.get("condition", "").lower()
-        icon_name = self._weather_icon(condition)
+        icon_name = condition_to_icon(condition)
         frame.elements.append(IconElement(1, y, icon_name, size=8))
 
         temp = d.get("temp", "")
@@ -479,12 +479,3 @@ class LayoutEngine:
         lines.append(current)
         return lines
 
-    @staticmethod
-    def _weather_icon(condition: str) -> str:
-        """Pick an icon name from a weather condition string."""
-        c = condition.lower()
-        if "rain" in c or "drizzle" in c or "shower" in c:
-            return "rain"
-        if "cloud" in c or "overcast" in c:
-            return "cloud"
-        return "sun"

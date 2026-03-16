@@ -85,11 +85,11 @@ class FlightEnricher:
                 route.departure_city = local_info.city if local_info else None
 
         # 4. Unit conversions
-        alt_feet = int(state.baro_altitude * 3.28084) if state.baro_altitude else None
-        speed_knots = int(state.velocity * 1.94384) if state.velocity else None
+        alt_feet = int(state.baro_altitude * 3.28084) if state.baro_altitude is not None else None
+        speed_knots = int(state.velocity * 1.94384) if state.velocity is not None else None
         vrate_fpm = (
             int(state.vertical_rate * 196.85)
-            if state.vertical_rate else None
+            if state.vertical_rate is not None else None
         )
 
         # 5. Distance from observer

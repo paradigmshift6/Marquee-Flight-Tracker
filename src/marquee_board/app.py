@@ -28,8 +28,9 @@ class MarqueeBoardApp:
         self._display.start()
         self._running = True
 
-        signal.signal(signal.SIGINT, lambda *_: self._shutdown())
-        signal.signal(signal.SIGTERM, lambda *_: self._shutdown())
+        # Signal handlers only set the flag; cleanup happens after the loop.
+        signal.signal(signal.SIGINT, lambda *_: setattr(self, '_running', False))
+        signal.signal(signal.SIGTERM, lambda *_: setattr(self, '_running', False))
 
         logger.info(
             "Marquee Board started with %d provider(s): %s",
@@ -37,38 +38,54 @@ class MarqueeBoardApp:
             ", ".join(p.name for p in self._providers),
         )
 
-        while self._running:
+        try:
+            while self._running:
+                try:
+                    if not self._is_active():
+                        if not self._sleeping:
+                            logger.info("Outside active hours — entering sleep mode")
+                            self._sleeping = True
+                            self._display.update({}, {}, structured=[])
+                        time.sleep(30)
+                        continue
+
+                    if self._sleeping:
+                        logger.info("Active hours — waking up")
+                        self._sleeping = False
+
+                    grouped: Dict[str, List[str]] = {}
+                    display_names: Dict[str, str] = {}
+                    all_messages: List[MarqueeMessage] = []
+
+                    for provider in self._providers:
+                        messages = provider.fetch_messages()
+                        grouped[provider.name] = [m.text for m in messages]
+                        display_names[provider.name] = provider.display_name
+                        all_messages.extend(messages)
+
+                    self._display.update(
+                        grouped, display_names, structured=all_messages
+                    )
+
+                except Exception:
+                    logger.exception("Error in main loop")
+
+                time.sleep(2)
+        finally:
+            self._cleanup()
+
+    def _cleanup(self):
+        """Stop all providers and display. Safe to call multiple times."""
+        logger.info("Shutting down...")
+        for p in self._providers:
             try:
-                if not self._is_active():
-                    if not self._sleeping:
-                        logger.info("Outside active hours — entering sleep mode")
-                        self._sleeping = True
-                        self._display.update({}, {}, structured=[])
-                    time.sleep(30)
-                    continue
-
-                if self._sleeping:
-                    logger.info("Active hours — waking up")
-                    self._sleeping = False
-
-                grouped: Dict[str, List[str]] = {}
-                display_names: Dict[str, str] = {}
-                all_messages: List[MarqueeMessage] = []
-
-                for provider in self._providers:
-                    messages = provider.fetch_messages()
-                    grouped[provider.name] = [m.text for m in messages]
-                    display_names[provider.name] = provider.display_name
-                    all_messages.extend(messages)
-
-                self._display.update(
-                    grouped, display_names, structured=all_messages
-                )
-
+                p.stop()
             except Exception:
-                logger.exception("Error in main loop")
-
-            time.sleep(2)
+                logger.debug("Error stopping provider %s", p.name, exc_info=True)
+        try:
+            self._display.stop()
+        except Exception:
+            logger.debug("Error stopping display", exc_info=True)
 
     def _is_active(self) -> bool:
         """Check if current time is within configured active hours."""
@@ -94,8 +111,11 @@ class MarqueeBoardApp:
 
     def _init_providers(self, config: AppConfig):
         if config.flights.enabled:
-            from .providers.flights import FlightProvider
-            self._providers.append(FlightProvider(config))
+            try:
+                from .providers.flights import FlightProvider
+                self._providers.append(FlightProvider(config))
+            except Exception as e:
+                logger.warning("Flight provider unavailable: %s", e)
 
         if config.weather.enabled:
             try:
@@ -144,8 +164,5 @@ class MarqueeBoardApp:
             raise ValueError(f"Unknown display backend: {backend}")
 
     def _shutdown(self):
-        logger.info("Shutting down...")
+        """Legacy entry point — just sets the flag; cleanup is in _cleanup()."""
         self._running = False
-        for p in self._providers:
-            p.stop()
-        self._display.stop()

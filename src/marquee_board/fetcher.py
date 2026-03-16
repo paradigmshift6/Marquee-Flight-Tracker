@@ -107,6 +107,9 @@ class OpenSkyFetcher:
         states = data.get("states") or []
         results = []
         for s in states:
+            if len(s) < 14:
+                logger.debug("Skipping short state vector (%d elements)", len(s))
+                continue
             callsign = s[1].strip() if s[1] else None
             if not callsign:
                 continue

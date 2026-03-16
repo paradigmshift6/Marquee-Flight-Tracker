@@ -133,10 +133,10 @@ class FlightProvider(MarqueeProvider):
         if self._enricher:
             return self._enricher.enrich(state)
 
-        alt_feet = int(state.baro_altitude * 3.28084) if state.baro_altitude else None
-        speed_knots = int(state.velocity * 1.94384) if state.velocity else None
+        alt_feet = int(state.baro_altitude * 3.28084) if state.baro_altitude is not None else None
+        speed_knots = int(state.velocity * 1.94384) if state.velocity is not None else None
         distance = None
-        if state.latitude and state.longitude:
+        if state.latitude is not None and state.longitude is not None:
             distance = haversine(
                 self._config.location.latitude,
                 self._config.location.longitude,
@@ -151,7 +151,7 @@ class FlightProvider(MarqueeProvider):
             speed_knots=speed_knots,
             heading=state.true_track,
             vertical_rate_fpm=(
-                int(state.vertical_rate * 196.85) if state.vertical_rate else None
+                int(state.vertical_rate * 196.85) if state.vertical_rate is not None else None
             ),
             distance_miles=distance,
             on_ground=state.on_ground,

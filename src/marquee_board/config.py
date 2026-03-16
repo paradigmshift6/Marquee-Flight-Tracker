@@ -3,7 +3,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Union
 
+import re
+
 import yaml
+
+
+def _parse_yaml_time(value, default: str = "06:30") -> str:
+    """Safely convert a YAML time value to 'HH:MM' string.
+
+    PyYAML interprets unquoted ``06:30`` as the integer 390 (sexagesimal).
+    This helper normalises ints, floats and strings back to ``HH:MM``.
+    """
+    if isinstance(value, int):
+        # YAML sexagesimal: 06:30 → 390 (6*60+30)
+        hours, minutes = divmod(value, 60)
+        return f"{hours:02d}:{minutes:02d}"
+    s = str(value).strip()
+    if re.fullmatch(r"\d{1,2}:\d{2}", s):
+        return s
+    return default
 
 
 @dataclass
@@ -194,8 +212,8 @@ def load_config(path: str) -> AppConfig:
     if sched := raw.get("schedule"):
         config.schedule = ScheduleConfig(
             enabled=sched.get("enabled", False),
-            active_start=str(sched.get("active_start", "06:30")),
-            active_end=str(sched.get("active_end", "18:00")),
+            active_start=_parse_yaml_time(sched.get("active_start", "06:30"), "06:30"),
+            active_end=_parse_yaml_time(sched.get("active_end", "18:00"), "18:00"),
         )
 
     return config
@@ -213,12 +231,26 @@ def save_config(path: str, config: Union[AppConfig, dict]) -> None:
     else:
         data = config
 
-    # Ensure schedule times stay as quoted strings (PyYAML would
-    # otherwise interpret "06:30" as an integer).
+    # Ensure schedule times survive a YAML round-trip as quoted strings.
+    # PyYAML interprets unquoted "06:30" as the integer 390 (sexagesimal),
+    # so we normalise to HH:MM first, then wrap in a YAML literal string.
     if "schedule" in data:
         for key in ("active_start", "active_end"):
             if key in data["schedule"] and data["schedule"][key] is not None:
-                data["schedule"][key] = str(data["schedule"][key])
+                time_str = _parse_yaml_time(data["schedule"][key])
+                # yaml.scalarstring is only in ruamel; use a representer instead
+                data["schedule"][key] = time_str
+
+    # Custom representer to force-quote strings that look like sexagesimal
+    class _QuotedDumper(yaml.SafeDumper):
+        pass
+
+    def _str_representer(dumper, value):
+        if re.fullmatch(r"\d{1,2}:\d{2}", value):
+            return dumper.represent_scalar("tag:yaml.org,2002:str", value, style="'")
+        return dumper.represent_scalar("tag:yaml.org,2002:str", value)
+
+    _QuotedDumper.add_representer(str, _str_representer)
 
     with open(path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+        yaml.dump(data, f, Dumper=_QuotedDumper, default_flow_style=False, sort_keys=False)
