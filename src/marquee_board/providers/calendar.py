@@ -101,7 +101,20 @@ class CalendarProvider(MarqueeProvider):
             token_path.parent.mkdir(parents=True, exist_ok=True)
             token_path.write_text(creds.to_json())
 
-        return AuthorizedSession(creds)
+        session = AuthorizedSession(creds)
+        # certifi's cacert.pem is sometimes absent in venvs built under sudo.
+        # Fall back to the system CA bundle (always present on Debian/Pi OS).
+        _SYSTEM_CA = "/etc/ssl/certs/ca-certificates.crt"
+        try:
+            import certifi
+            ca_bundle = certifi.where()
+            import os
+            if not os.path.exists(ca_bundle):
+                raise FileNotFoundError(ca_bundle)
+        except Exception:
+            ca_bundle = _SYSTEM_CA
+        session.verify = ca_bundle
+        return session
 
     def _fetch_events(self) -> List[MarqueeMessage]:
         now = datetime.now(timezone.utc)
