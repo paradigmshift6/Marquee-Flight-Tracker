@@ -29,12 +29,14 @@ class LEDDisplay(DisplayBackend):
         brightness: int = 80,
         gpio_slowdown: int = 4,
         hardware_mapping: str = "adafruit-hat",
+        rotation: int = 0,
     ):
         self._width = width
         self._height = height
         self._brightness = brightness
         self._gpio_slowdown = gpio_slowdown
         self._hardware_mapping = hardware_mapping
+        self._rotation = rotation
         self._matrix = None
         self._canvas = None
         self._engine = None
@@ -64,12 +66,14 @@ class LEDDisplay(DisplayBackend):
             options.brightness = self._brightness
             options.gpio_slowdown = self._gpio_slowdown
             options.hardware_mapping = self._hardware_mapping
+            if self._rotation in (90, 180, 270):
+                options.pixel_mapper_config = f"Rotate:{self._rotation}"
 
             self._matrix = RGBMatrix(options=options)
             self._canvas = self._matrix.CreateFrameCanvas()
             logger.info(
-                "LED matrix initialized (%dx%d, brightness=%d)",
-                self._width, self._height, self._brightness,
+                "LED matrix initialized (%dx%d, brightness=%d, rotation=%d°)",
+                self._width, self._height, self._brightness, self._rotation,
             )
         except ImportError:
             logger.error(

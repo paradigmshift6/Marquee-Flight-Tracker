@@ -105,6 +105,7 @@ class RendererConfig:
     brightness: int = 80
     gpio_slowdown: int = 4
     hardware_mapping: str = "adafruit-hat"  # "regular" | "adafruit-hat" | "adafruit-hat-pwm"
+    rotation: int = 0  # 0 | 90 | 180 | 270 — rotates the entire display
 
 
 @dataclass
@@ -207,6 +208,7 @@ def load_config(path: str) -> AppConfig:
             brightness=rend.get("brightness", 80),
             gpio_slowdown=rend.get("gpio_slowdown", 4),
             hardware_mapping=rend.get("hardware_mapping", "adafruit-hat"),
+            rotation=rend.get("rotation", 0),
         )
 
     if sched := raw.get("schedule"):

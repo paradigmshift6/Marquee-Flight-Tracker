@@ -161,6 +161,7 @@ class MarqueeBoardApp:
                 brightness=config.renderer.brightness,
                 gpio_slowdown=config.renderer.gpio_slowdown,
                 hardware_mapping=config.renderer.hardware_mapping,
+                rotation=config.renderer.rotation,
             )
         else:
             raise ValueError(f"Unknown display backend: {backend}")
