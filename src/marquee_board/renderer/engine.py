@@ -323,30 +323,31 @@ class LayoutEngine:
         header_h = 8 if section_h < 22 else 9
         y += header_h
 
-        # Event name — word-wrapped onto as many lines as space allows
+        # Event name — word-wrap if it fits, otherwise scroll the full text.
         summary = d.get("summary", event.text)
         max_line_px = self.width - 4  # 2px margin each side
         # Use tighter line height when the remaining area is small (short panels)
         available = y_end - y
         line_height = 8 if available < 20 else 9
+
         lines = self._word_wrap(summary, max_line_px, "tiny")
-
-        # How many summary lines fit in remaining space?
         max_lines = max(1, available // line_height)
-        lines = lines[:max_lines]
 
-        # If we had to cut lines, truncate the last one with "."
-        if max_lines < len(self._word_wrap(summary, max_line_px, "tiny")):
-            last = lines[-1]
-            while self._approx_text_width(last + ".", "tiny") > max_line_px and len(last) > 1:
-                last = last[:-1]
-            lines[-1] = last.rstrip() + "."
-
-        for line in lines:
+        if len(lines) <= max_lines:
+            # Fits completely — render static word-wrapped lines
+            for line in lines:
+                frame.elements.append(
+                    TextElement(2, y, line, "tiny", colors.WHITE)
+                )
+                y += line_height
+        else:
+            # Too long to show fully — scroll the full text on a single line so
+            # nothing is lost.  The painter pauses at each end before scrolling,
+            # so the text sits still most of the time ("occasionally" scrolling).
             frame.elements.append(
-                TextElement(2, y, line, "tiny", colors.WHITE)
+                TextElement(2, y, summary, "tiny", colors.WHITE,
+                            max_width=max_line_px, scroll=True)
             )
-            y += line_height
 
     def _draw_weather_section(
         self,
