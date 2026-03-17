@@ -108,15 +108,47 @@ class CalendarProvider(MarqueeProvider):
             creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
 
         if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(auth_request)
+            if creds and creds.expired:
+                if creds.refresh_token:
+                    creds.refresh(auth_request)
+                else:
+                    # Token exists but has no refresh_token — it can't be silently
+                    # renewed.  Running the browser flow on a headless Pi would hang.
+                    logger.error(
+                        "Calendar token at '%s' is expired and has no refresh_token. "
+                        "Delete it and re-authorize on a machine with a browser: "
+                        "  rm %s  && python -m marquee_board -c config.yaml",
+                        self._token_file, self._token_file,
+                    )
+                    return None
             else:
+                # No token at all — need a browser-based OAuth2 flow.
                 creds_path = Path(self._credentials_file)
                 if not creds_path.exists():
                     logger.error(
                         "Google Calendar credentials file not found: %s. "
                         "Download it from the Google Cloud Console.",
                         self._credentials_file,
+                    )
+                    return None
+
+                # On headless systems (no DISPLAY / Wayland), run_local_server()
+                # will start a local HTTP server but webbrowser.open() silently
+                # fails — the service would hang waiting for a redirect that
+                # never comes.  Detect this and fail fast with a clear message.
+                import sys as _sys
+                _headless = (
+                    os.name != "nt"
+                    and not os.environ.get("DISPLAY")
+                    and not os.environ.get("WAYLAND_DISPLAY")
+                    and not _sys.stdin.isatty()
+                )
+                if _headless:
+                    logger.error(
+                        "No Google Calendar token found and no browser is available. "
+                        "Authorize on a machine with a browser first, then copy "
+                        "%s to this device.",
+                        self._token_file,
                     )
                     return None
 

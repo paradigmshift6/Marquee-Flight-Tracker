@@ -105,12 +105,16 @@ class WeatherProvider(MarqueeProvider):
             logger.warning("Current weather fetch failed: %s", e)
             return None, {}
 
-        temp = round(data["main"]["temp"])
-        desc = data["weather"][0]["description"].title()
-        wind_speed = round(data["wind"]["speed"])
-        wind_deg = data["wind"].get("deg", 0)
-        wind_dir = _wind_direction(wind_deg)
-        humidity = data["main"]["humidity"]
+        try:
+            temp = round(data["main"]["temp"])
+            desc = data["weather"][0]["description"].title()
+            wind_speed = round(data["wind"]["speed"])
+            wind_deg = data["wind"].get("deg", 0)
+            wind_dir = _wind_direction(wind_deg)
+            humidity = data["main"]["humidity"]
+        except (KeyError, IndexError, TypeError) as e:
+            logger.warning("Unexpected current weather response structure: %s", e)
+            return None, {}
 
         temp_unit = "\u00b0F" if self._units == "imperial" else "\u00b0C"
         speed_unit = "mph" if self._units == "imperial" else "m/s"
@@ -156,14 +160,18 @@ class WeatherProvider(MarqueeProvider):
 
         temp_unit = "\u00b0F" if self._units == "imperial" else "\u00b0C"
 
-        # Find high/low and dominant condition over the forecast window
-        temps = [item["main"]["temp"] for item in items]
-        hi = round(max(temps))
-        lo = round(min(temps))
+        try:
+            # Find high/low and dominant condition over the forecast window
+            temps = [item["main"]["temp"] for item in items]
+            hi = round(max(temps))
+            lo = round(min(temps))
 
-        # Most common weather condition
-        conditions = [item["weather"][0]["description"] for item in items]
-        dominant = max(set(conditions), key=conditions.count).title()
+            # Most common weather condition
+            conditions = [item["weather"][0]["description"] for item in items]
+            dominant = max(set(conditions), key=conditions.count).title()
+        except (KeyError, IndexError, TypeError, ValueError) as e:
+            logger.warning("Unexpected forecast response structure: %s", e)
+            return None, {}
 
         text = f"Next 24h: {lo}{temp_unit} - {hi}{temp_unit}  {dominant}"
 

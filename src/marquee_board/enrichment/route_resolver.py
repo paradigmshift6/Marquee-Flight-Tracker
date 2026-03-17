@@ -113,9 +113,17 @@ class RouteResolver:
             self._cache_route(callsign, route)
             return route
 
-        # Mark as failed
+        # Mark as failed; prune expired entries to prevent unbounded growth
         self._failed_lookups[callsign] = time.time()
+        self._prune_failed_lookups()
         return None
+
+    def _prune_failed_lookups(self) -> None:
+        """Remove cooldown entries that have already expired."""
+        cutoff = time.time() - self._fail_cooldown
+        expired = [k for k, v in self._failed_lookups.items() if v < cutoff]
+        for k in expired:
+            del self._failed_lookups[k]
 
     def _try_opensky_flights(self, callsign: str, icao24: str) -> Optional[RouteInfo]:
         """Try the /flights/aircraft endpoint — returns departure/arrival airports."""

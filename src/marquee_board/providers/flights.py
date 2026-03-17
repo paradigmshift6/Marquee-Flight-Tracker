@@ -58,6 +58,12 @@ class FlightProvider(MarqueeProvider):
         if self._cached_messages and (now - self._last_fetch) < interval:
             return self._cached_messages
 
+        # If the fetcher is in rate-limit backoff, return whatever we had last
+        # rather than letting _enforce_rate_limit() sleep in the main loop and
+        # freeze the display for up to 300 s.
+        if not self._fetcher.ready_to_fetch():
+            return self._cached_messages
+
         try:
             raw_states = self._fetcher.fetch()
             filtered = self._filter_states(raw_states)

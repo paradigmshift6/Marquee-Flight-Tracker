@@ -250,6 +250,15 @@ class OpenSkyFetcher:
             logger.error("OAuth2 token request error: %s", e)
             return None
 
+    def ready_to_fetch(self) -> bool:
+        """True if enough time has passed since the last request (incl. backoff).
+
+        Callers should check this before calling fetch() and return cached data
+        immediately when False, avoiding any sleep in the main loop.
+        """
+        wait = self._min_interval + self._backoff
+        return (time.monotonic() - self._last_request_time) >= wait
+
     def _enforce_rate_limit(self):
         wait = self._min_interval + self._backoff
         elapsed = time.monotonic() - self._last_request_time

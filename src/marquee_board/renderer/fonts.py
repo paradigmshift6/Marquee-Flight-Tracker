@@ -139,8 +139,14 @@ class FontManager:
 
         assert self._bdf_source_dir is not None
         bdf_path = self._bdf_source_dir / bdf_filename
-        if not bdf_path.exists():
-            logger.debug("BDF source not found: %s", bdf_path)
+        # Python 3.13 changed Path.exists() to raise PermissionError instead of
+        # returning False.  Treat any OSError as "not accessible".
+        try:
+            bdf_exists = bdf_path.exists()
+        except OSError:
+            bdf_exists = False
+        if not bdf_exists:
+            logger.debug("BDF source not accessible: %s", bdf_path)
             return None
 
         pil_path = _ensure_converted(bdf_path, name)
