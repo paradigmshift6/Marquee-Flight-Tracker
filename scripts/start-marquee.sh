@@ -42,9 +42,12 @@ if [ "$UPDATED" = true ]; then
     }
 fi
 
-# ── 3. Ensure system CA bundle is available ────────────
+# ── 3. Ensure data directory exists and is writable ────
+mkdir -p "$MARQUEE_DIR/data"
+
+# ── 4. Ensure system CA bundle is available ────────────
 export REQUESTS_CA_BUNDLE="${REQUESTS_CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
 
-# ── 4. Launch the app ──────────────────────────────────
+# ── 5. Launch the app (needs root for GPIO/LED matrix) ─
 log "Starting Marquee Board..."
-exec "$VENV_PYTHON" -m marquee_board -c config.yaml
+exec sudo -E "$VENV_PYTHON" -m marquee_board -c config.yaml

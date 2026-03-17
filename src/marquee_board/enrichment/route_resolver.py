@@ -303,6 +303,7 @@ class RouteResolver:
     def _save_disk_cache(self):
         cache_file = self._cache_dir / "route_cache.json"
         try:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
             cache_file.write_text(json.dumps(self._disk_cache, indent=2))
         except OSError as e:
             logger.warning("Failed to save route cache: %s", e)

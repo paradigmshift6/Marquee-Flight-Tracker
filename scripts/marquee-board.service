@@ -6,9 +6,11 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
-# LED matrix requires root for GPIO; -E preserves env vars (CA bundle, etc.)
-ExecStart=/usr/bin/sudo -E /home/levi/marquee-board/scripts/start-marquee.sh
+# Run as levi so git pull and pip install work on levi-owned files.
+# The start script elevates to root only for the final python process
+# (which needs GPIO access for the LED matrix).
+User=levi
+ExecStart=/home/levi/marquee-board/scripts/start-marquee.sh
 WorkingDirectory=/home/levi/marquee-board
 
 # Environment
