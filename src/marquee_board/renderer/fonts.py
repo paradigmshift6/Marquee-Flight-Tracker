@@ -35,13 +35,14 @@ _BDF_NAMES: Dict[str, str] = {
     "large":  "9x15.bdf",
 }
 
-# Known locations of rpi-rgb-led-matrix fonts directory
+# Known locations of BDF font files.  The bundled directory ships with the
+# package and is checked first so the fonts always load regardless of
+# external rpi-rgb-led-matrix install or file-permission quirks.
 _BDF_SEARCH_DIRS: List[Path] = [
+    Path(__file__).parent / "bdf_fonts",          # bundled (always present)
     Path("/home/levi/rpi-rgb-led-matrix/fonts"),
     Path("/usr/share/rpi-rgb-led-matrix/fonts"),
     Path("/opt/rpi-rgb-led-matrix/fonts"),
-    # Allow a local override: drop .bdf files into renderer/bdf_fonts/
-    Path(__file__).parent / "bdf_fonts",
 ]
 
 # Where converted .pil / .pbm files are cached
@@ -78,6 +79,7 @@ class FontManager:
 
     def __init__(self):
         self._cache: Dict[str, ImageFont.ImageFont] = {}
+        self._is_bdf: Dict[str, bool] = {}  # name → True if BDF (purely binary, no AA)
         self._default = ImageFont.load_default()
         self._bdf_source_dir: Optional[Path] = _find_bdf_source_dir()
         if self._bdf_source_dir:
@@ -96,6 +98,15 @@ class FontManager:
         font = self._load(name)
         self._cache[name] = font
         return font
+
+    def is_binary(self, name: str = "small") -> bool:
+        """True if the font for *name* is a BDF bitmap (purely binary pixels).
+
+        When True the painter can skip the greyscale threshold step and
+        draw text directly — faster and pixel-perfect.
+        """
+        self.get(name)  # ensure loaded
+        return self._is_bdf.get(name, False)
 
     def measure(self, text: str, font_name: str = "small") -> Tuple[int, int]:
         """Return (width, height) of rendered *text*."""
@@ -116,19 +127,22 @@ class FontManager:
     # ------------------------------------------------------------------
 
     def _load(self, name: str) -> ImageFont.ImageFont:
-        # 1. Try BDF → PIL conversion path
+        # 1. Try BDF → PIL conversion path (binary, no anti-aliasing)
         if self._bdf_source_dir:
             font = self._load_bdf(name)
             if font is not None:
+                self._is_bdf[name] = True
                 return font
 
-        # 2. TrueType fallback
+        # 2. TrueType fallback (anti-aliased, needs threshold)
         font = self._load_truetype(name)
         if font is not None:
+            self._is_bdf[name] = False
             return font
 
         # 3. Absolute last resort
         logger.warning("Using Pillow default bitmap font for '%s'", name)
+        self._is_bdf[name] = False
         return self._default
 
     def _load_bdf(self, name: str) -> Optional[ImageFont.ImageFont]:

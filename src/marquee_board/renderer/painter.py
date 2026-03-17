@@ -67,14 +67,14 @@ class FramePainter:
 
         # No width constraint → draw full text (clips at image edge naturally)
         if el.max_width is None or el.max_width <= 0:
-            self._render_sharp(img, el.x, el.y, el.text, font, el.color)
+            self._render_sharp(img, el.x, el.y, el.text, font, el.color, el.font_name)
             return
 
         text_w = self._fonts.text_width(el.text, el.font_name)
 
         # Fits within constraint → draw normally
         if text_w <= el.max_width:
-            self._render_sharp(img, el.x, el.y, el.text, font, el.color)
+            self._render_sharp(img, el.x, el.y, el.text, font, el.color, el.font_name)
             return
 
         if el.scroll:
@@ -82,34 +82,42 @@ class FramePainter:
         else:
             self._draw_truncated_text(img, el, font)
 
-    @staticmethod
     def _render_sharp(
+        self,
         img: Image.Image,
         x: int,
         y: int,
         text: str,
         font,
         color: tuple,
+        font_name: str = "small",
     ):
         """Paint text with binary (non-antialiased) pixels for crisp LED output.
 
-        Renders via a greyscale scratch image then hard-thresholds at 128 so
-        every glyph pixel is either fully on (255) or fully off (0).  This
-        eliminates the dim anti-aliasing halos that TrueType rendering
-        produces on physical LED matrices.
+        BDF bitmap fonts are purely binary — every pixel is either fully on
+        or fully off — so we can draw them directly with no post-processing.
+
+        TrueType fonts produce anti-aliased grey pixels.  For those we render
+        to a greyscale scratch canvas, hard-threshold at 40, and paste the
+        result with the target colour.
         """
         if not text:
             return
-        # Render text onto a same-size greyscale scratch canvas
-        tmp = Image.new("L", img.size, 0)
-        ImageDraw.Draw(tmp).text((x, y), text, fill=255, font=font)
-        # Threshold: keep pixels above 40 to preserve thin strokes that
-        # TrueType anti-aliasing renders at lower brightness at small sizes.
-        # 127 cuts too aggressively and breaks character shapes; 40 eliminates
-        # the faint halo (0-39) while keeping all meaningful glyph pixels.
-        alpha = tmp.point(lambda p: 255 if p > 40 else 0)
-        colored = Image.new("RGB", img.size, color[:3])
-        img.paste(colored, mask=alpha)
+
+        if self._fonts.is_binary(font_name):
+            # Fast path: BDF bitmap fonts produce only 0/255 pixels.
+            # Render to a 1-channel mask and composite directly.
+            tmp = Image.new("L", img.size, 0)
+            ImageDraw.Draw(tmp).text((x, y), text, fill=255, font=font)
+            colored = Image.new("RGB", img.size, color[:3])
+            img.paste(colored, mask=tmp)
+        else:
+            # TrueType path: threshold anti-aliased output to binary.
+            tmp = Image.new("L", img.size, 0)
+            ImageDraw.Draw(tmp).text((x, y), text, fill=255, font=font)
+            alpha = tmp.point(lambda p: 255 if p > 40 else 0)
+            colored = Image.new("RGB", img.size, color[:3])
+            img.paste(colored, mask=alpha)
 
     def _draw_truncated_text(
         self,
@@ -127,7 +135,8 @@ class FramePainter:
         ):
             truncated = truncated[:-1]
         self._render_sharp(
-            img, el.x, el.y, truncated.rstrip() + ellipsis, font, el.color
+            img, el.x, el.y, truncated.rstrip() + ellipsis, font, el.color,
+            el.font_name,
         )
 
     def _draw_scrolling_text(
@@ -170,9 +179,12 @@ class FramePainter:
         # box that clips descenders/ascenders when used as a canvas height.
         tmp_gray = Image.new("L", (text_w + pad, img.height), 0)
         ImageDraw.Draw(tmp_gray).text((0, el.y), el.text, fill=255, font=font)
-        # Match the threshold used by _render_sharp (40) so scrolling and static
-        # text have identical stroke fidelity.
-        alpha_full = tmp_gray.point(lambda p: 255 if p > 40 else 0)
+        # BDF bitmap fonts are already binary — skip the threshold step.
+        # TrueType needs the threshold to remove anti-aliasing halos.
+        if self._fonts.is_binary(el.font_name):
+            alpha_full = tmp_gray
+        else:
+            alpha_full = tmp_gray.point(lambda p: 255 if p > 40 else 0)
 
         # Crop only horizontally to the visible window; preserve full height
         crop_right = min(offset + el.max_width, text_w + pad)

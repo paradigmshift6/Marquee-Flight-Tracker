@@ -15,11 +15,12 @@ ORANGE = (255, 128, 0)
 BLUE = (60, 120, 255)
 MAGENTA = (255, 0, 200)
 
-# Dim variants (for secondary / background text)
-DIM_WHITE = (100, 100, 100)
-DIM_AMBER = (120, 90, 0)
-DIM_GREEN = (0, 100, 30)
-DIM_CYAN = (0, 80, 100)
+# Dim variants — bright enough to read clearly on LED panels.
+# Values below ~80 per channel are barely visible on most HUB75 matrices.
+DIM_WHITE = (140, 140, 140)
+DIM_AMBER = (160, 120, 0)
+DIM_GREEN = (0, 140, 45)
+DIM_CYAN = (0, 130, 160)
 
 # Semantic aliases
 FLIGHT_COLOR = CYAN
@@ -27,7 +28,7 @@ WEATHER_COLOR = AMBER
 CALENDAR_COLOR = GREEN
 CLOCK_COLOR = WHITE
 LABEL_COLOR = DIM_WHITE
-SEPARATOR_COLOR = (40, 40, 40)
+SEPARATOR_COLOR = (60, 60, 60)
 BG_COLOR = (0, 0, 0)
 
 # Sleep / idle screen — very dim so the display is unobtrusive at night
