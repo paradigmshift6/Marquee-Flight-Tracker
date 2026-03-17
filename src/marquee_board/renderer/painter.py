@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Scroll tuning
 _SCROLL_PAUSE = 2.0    # seconds to pause at each end
-_SCROLL_SPEED = 30.0   # pixels per second
+_SCROLL_SPEED = 22.0   # pixels per second
 
 
 class FramePainter:

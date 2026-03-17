@@ -36,6 +36,7 @@ class LEDDisplay(DisplayBackend):
         self._gpio_slowdown = gpio_slowdown
         self._hardware_mapping = hardware_mapping
         self._matrix = None
+        self._canvas = None
         self._engine = None
         self._painter = None
 
@@ -65,6 +66,7 @@ class LEDDisplay(DisplayBackend):
             options.hardware_mapping = self._hardware_mapping
 
             self._matrix = RGBMatrix(options=options)
+            self._canvas = self._matrix.CreateFrameCanvas()
             logger.info(
                 "LED matrix initialized (%dx%d, brightness=%d)",
                 self._width, self._height, self._brightness,
@@ -113,10 +115,10 @@ class LEDDisplay(DisplayBackend):
     def _render_loop(self) -> None:
         """Render frames continuously at _TARGET_FPS.
 
-        Reads the latest messages under a lock, lays them out, paints the
-        frame, and pushes it to the matrix.  Because layout/paint use
-        wall-clock time for scroll offsets, each frame naturally advances
-        the animation without any extra state.
+        Uses a double-buffered offscreen canvas + SwapOnVSync so each frame
+        is pushed to the panel atomically at a display refresh boundary.
+        This eliminates the tearing / flicker that SetImage() on the active
+        buffer can cause when the matrix is mid-scan.
         """
         frame_budget = 1.0 / _TARGET_FPS
         while self._render_running:
@@ -126,7 +128,9 @@ class LEDDisplay(DisplayBackend):
                     messages = list(self._messages)
                 layout = self._engine.layout(messages)
                 img = self._painter.paint(layout)
-                self._matrix.SetImage(img)
+                # Draw into offscreen canvas, then swap atomically on vsync
+                self._canvas.SetImage(img)
+                self._canvas = self._matrix.SwapOnVSync(self._canvas)
             except Exception:
                 logger.exception("Error in LED render loop")
 
